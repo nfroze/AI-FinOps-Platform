@@ -12,6 +12,8 @@ The infrastructure runs on AWS EKS with Strimzi managing the Kafka cluster. Dedi
 
 ## Architecture
 
+![Cloud Architecture](screenshots/cloud-architecture.png)
+
 The platform follows an event-driven architecture centred on Apache Kafka as the message backbone. The EKS cluster spans three availability zones for high availability, with Kafka running as a 3-broker cluster managed by the Strimzi operator.
 
 **Data flow**: OpenCost and Prometheus collect cost and utilisation metrics from the Kubernetes cluster → Events are published to Kafka topics (gpu-utilization-events, ai-api-costs, cost-anomalies) → Grafana dashboards consume metrics for real-time visualisation → Anomaly detection consumes the cost streams and publishes to the anomalies topic.
