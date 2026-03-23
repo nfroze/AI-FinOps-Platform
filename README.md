@@ -1,54 +1,52 @@
 # AI FinOps Platform
 
-Real-time cost observability for AI/ML infrastructure, streaming GPU utilisation and API spend events through Kafka for anomaly detection and optimisation.
+A Kubernetes-native cost observability platform that streams GPU utilisation and AI API spend through Kafka into real-time Grafana dashboards — built for organisations running ML workloads at scale.
 
 ## Overview
 
-Organisations running AI workloads face a unique cost challenge: GPU instances and API calls to models like GPT-4 can burn through budgets in hours if left unmonitored. Traditional cloud cost tools operate on daily billing cycles—far too slow when a misconfigured training job can consume thousands in compute before anyone notices.
+AI infrastructure costs are notoriously opaque. GPU instances sit idle between training runs, API calls to hosted models accumulate silently, and platform teams lack the real-time visibility needed to act before budgets overrun. This project builds the observability layer that solves that problem.
 
-This platform provides real-time cost visibility by streaming infrastructure metrics and API cost events through Apache Kafka. OpenCost tracks Kubernetes resource allocation at the pod level, Prometheus scrapes utilisation metrics, and Grafana visualises cost trends as they happen. The event-driven architecture enables immediate alerting on cost anomalies rather than discovering overruns in next month's invoice.
+The platform provisions an EKS cluster with Terraform, deploys a three-broker Strimzi Kafka cluster for high-throughput event streaming, and layers Prometheus, Grafana, and OpenCost on top for full-stack cost visibility. Three dedicated Kafka topics — GPU utilisation events, AI API costs, and cost anomalies — capture the data streams that feed the dashboards. The architecture separates cost data ingestion from visualisation, so each layer scales independently.
 
-The infrastructure runs on AWS EKS with Strimzi managing the Kafka cluster. Dedicated topics separate GPU utilisation events, AI API costs, and detected anomalies—enabling downstream consumers to process each stream independently for alerting, reporting, or automated scaling decisions.
+Everything is infrastructure-as-code and declarative. The VPC, EKS cluster, node groups, Kafka brokers, and topics are all version-controlled and reproducible — exactly how a platform team would operate this in production.
 
 ## Architecture
 
-![Cloud Architecture](screenshots/cloud-architecture.png)
+![](screenshots/cloud-architecture.png)
 
-The platform follows an event-driven architecture centred on Apache Kafka as the message backbone. The EKS cluster spans three availability zones for high availability, with Kafka running as a 3-broker cluster managed by the Strimzi operator.
-
-**Data flow**: OpenCost and Prometheus collect cost and utilisation metrics from the Kubernetes cluster → Events are published to Kafka topics (gpu-utilization-events, ai-api-costs, cost-anomalies) → Grafana dashboards consume metrics for real-time visualisation → Anomaly detection consumes the cost streams and publishes to the anomalies topic.
-
-The Terraform configuration provisions the complete AWS infrastructure: a VPC with public/private subnets across three AZs, an EKS cluster with managed node groups, and outputs the commands needed to access monitoring tools.
+The platform runs inside a purpose-built VPC in eu-west-2 with three availability zones. EKS worker nodes sit in private subnets behind a NAT gateway, with no direct internet exposure. Strimzi manages the Kafka lifecycle inside the cluster's `kafka` namespace, handling broker coordination through a co-located three-node ZooKeeper ensemble. Prometheus scrapes metrics from both the Kafka brokers and the node group, Grafana queries Prometheus for dashboard visualisation, and OpenCost correlates resource consumption with actual cloud spend. Cost event data flows through Kafka topics with replication factor 3 and configurable partitioning (10 partitions for high-volume streams, 3 for anomaly alerts).
 
 ## Tech Stack
 
-**Infrastructure**: AWS EKS, Terraform, VPC with 3 AZs, NAT Gateway  
-**Streaming**: Apache Kafka 3-broker cluster, Strimzi Operator, ZooKeeper  
-**Cost Monitoring**: OpenCost, Prometheus  
-**Visualisation**: Grafana  
-**Container Orchestration**: Kubernetes 1.28
+**Infrastructure**: AWS EKS, VPC (3 AZs, public/private subnets, NAT gateway), Terraform with community modules
+
+**Data Streaming**: Strimzi Kafka (3 brokers), ZooKeeper (3 nodes), dedicated topics for GPU, API cost, and anomaly events
+
+**Monitoring & FinOps**: Prometheus, Grafana, OpenCost
+
+**Orchestration**: Kubernetes 1.28, EKS Managed Node Groups (t3.large)
 
 ## Key Decisions
 
-- **Strimzi over self-managed Kafka**: Kubernetes-native operator simplifies Kafka lifecycle management, handles broker scaling, and integrates with K8s RBAC. Running Kafka on K8s without an operator requires significant operational overhead.
+- **Strimzi over self-managed Kafka**: Operating Kafka on Kubernetes is complex — Strimzi's operator pattern handles broker lifecycle, topic management, and rolling upgrades declaratively. This is how most teams run Kafka on EKS in production without dedicating an engineer to broker management.
 
-- **Ephemeral storage for demo environment**: Production would use persistent volumes, but ephemeral storage reduces costs and complexity for demonstrating the architecture. The configuration is structured to swap storage type with a single parameter change.
+- **Three separate Kafka topics over a single event stream**: GPU utilisation, API costs, and anomalies have different volume profiles and consumer patterns. Splitting them allows independent partition tuning (10 partitions for high-throughput GPU metrics, 3 for lower-volume anomaly alerts) and prevents a noisy stream from blocking cost anomaly processing.
 
-- **10 partitions for cost event topics, 3 for anomalies**: High-volume streams (GPU events, API costs) need parallelism for consumer throughput. Anomaly events are lower volume but higher priority—fewer partitions simplify ordering guarantees.
+- **Private subnets with single NAT gateway**: Worker nodes have no public IP exposure. A single NAT gateway keeps the demo cost-efficient while still demonstrating the production pattern of private compute with controlled egress.
 
-- **Single NAT Gateway**: Cost optimisation for demo purposes. Production deployments would use one NAT gateway per AZ for resilience, accepting the ~$30/month additional cost per gateway.
+- **OpenCost alongside Grafana**: Grafana visualises time-series metrics, but OpenCost maps resource consumption directly to Kubernetes cost allocation. Together they answer both "what's happening" and "what's it costing" — the two questions every FinOps team needs answered simultaneously.
 
 ## Screenshots
 
-![EKS cluster](screenshots/eks-cluster.png)
+![](screenshots/eks-cluster.png)
 
-![Kafka topics](screenshots/kafka-topics.png)
+![](screenshots/grafana-dashboard.png)
 
-![Grafana dashboard](screenshots/grafana-dashboard.png)
+![](screenshots/kafka-topics.png)
 
-![OpenCost UI](screenshots/opencost-ui.png)
+![](screenshots/opencost-ui.png)
 
-![Platform pods](screenshots/pods-running.png)
+![](screenshots/pods-running.png)
 
 ## Author
 
