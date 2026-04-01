@@ -38,13 +38,23 @@ The platform runs inside a purpose-built VPC in eu-west-2 with three availabilit
 
 ## Screenshots
 
+**EKS Cluster Overview** — AWS Console displaying the provisioned EKS cluster with complete node group configuration, showing 6 running compute nodes, 0 pods pending, and networking setup across multiple availability zones in eu-west-2.
+
 ![](screenshots/eks-cluster.png)
 
-![](screenshots/grafana-dashboard.png)
+**Kafka Topics Configuration** — kubectl output listing the three dedicated Kafka topics that power the platform: ai-api-costs (10 partitions), cost-anomalies (3 partitions), and gpu-utilization-events (10 partitions), all configured with replication factor 3 for high availability.
 
 ![](screenshots/kafka-topics.png)
 
+**Grafana Monitoring Dashboard** — Real-time Grafana dashboard with dark theme displaying multi-dimensional metrics including CPU and memory consumption trends, resource utilization graphs across time series data, and multiple panels monitoring the platform's performance characteristics.
+
+![](screenshots/grafana-dashboard.png)
+
+**OpenCost Cost Allocation** — OpenCost UI showing cost breakdown with an interactive gauge chart visualizing daily cost allocation by namespace, including detailed tabular breakdown of per-namespace costs and resource consumption metrics.
+
 ![](screenshots/opencost-ui.png)
+
+**Kubernetes Pods Status** — kubectl output showing all running pods across the platform with full namespace visibility, displaying the complete Kafka cluster (brokers, ZooKeeper), Strimzi operators, Prometheus, Grafana, OpenCost, and monitoring components with their readiness status and uptime.
 
 ![](screenshots/pods-running.png)
 
