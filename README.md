@@ -56,7 +56,7 @@ The platform runs inside a purpose-built VPC in eu-west-2 with three availabilit
 
 **Kubernetes Pods Status** — kubectl output showing all running pods across the platform with full namespace visibility, displaying the complete Kafka cluster (brokers, ZooKeeper), Strimzi operators, Prometheus, Grafana, OpenCost, and monitoring components with their readiness status and uptime.
 
-![](screenshots/pods-running.png)
+![](screenshots/cluster-pods.png)
 
 ## Author
 
