@@ -12,8 +12,6 @@ Everything is infrastructure-as-code and declarative. The VPC, EKS cluster, node
 
 ## Architecture
 
-![](screenshots/cloud-architecture.png)
-
 The platform runs inside a purpose-built VPC in eu-west-2 with three availability zones. EKS worker nodes sit in private subnets behind a NAT gateway, with no direct internet exposure. Strimzi manages the Kafka lifecycle inside the cluster's `kafka` namespace, handling broker coordination through a co-located three-node ZooKeeper ensemble. Prometheus scrapes metrics from both the Kafka brokers and the node group, Grafana queries Prometheus for dashboard visualisation, and OpenCost correlates resource consumption with actual cloud spend. Cost event data flows through Kafka topics with replication factor 3 and configurable partitioning (10 partitions for high-volume streams, 3 for anomaly alerts).
 
 ## Tech Stack
